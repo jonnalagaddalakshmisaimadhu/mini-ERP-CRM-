@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  role          String   // ADMIN, SALES, WAREHOUSE, ACCOUNTS
+  name          String
+  createdAt     DateTime @default(now())
+}
+
+model Customer {
+  id            String   @id @default(uuid())
+  name          String
+  mobile        String
+  email         String?
+  businessName  String?
+  gstNumber     String?
+  type          String   // RETAIL, WHOLESALE, DISTRIBUTOR
+  address       String?
+  status        String   // LEAD, ACTIVE, INACTIVE
+  followUpDate  DateTime?
+  notes         CustomerNote[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  Challans      Challan[]
+  Invoices      Invoice[]
+}
+
+model CustomerNote {
+  id          String   @id @default(uuid())
+  note        String
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id])
+  createdBy   String
+  createdAt   DateTime @default(now())
+}
+
+model Product {
+  id             String   @id @default(uuid())
+  name           String
+  sku            String   @unique
+  category       String
+  unitPrice      Float
+  currentStock   Int      @default(0)
+  minStockAlert  Int      @default(10)
+  location       String?
+  imageUrl       String?
+  movements      StockMovement[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  PurchaseOrderItems PurchaseOrderItem[]
+}
+
+model StockMovement {
+  id            String   @id @default(uuid())
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id])
+  qtyChanged    Int
+  movementType  String   // IN, OUT
+  reason        String
+  createdBy     String
+  createdAt     DateTime @default(now())
+}
+
+model Challan {
+  id            String   @id @default(uuid())
+  challanNumber String   @unique
+  customerId    String
+  customer      Customer @relation(fields: [customerId], references: [id])
+  totalQuantity Int
+  status        String   // DRAFT, CONFIRMED, CANCELLED
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  items         ChallanItem[]
+  Invoice       Invoice?
+}
+
+model ChallanItem {
+  id              String   @id @default(uuid())
+  challanId       String
+  challan         Challan  @relation(fields: [challanId], references: [id])
+  productId       String
+  productSnapshot Json     // Changed back to Json for Postgres
+  quantity        Int
+}
+
+model PurchaseOrder {
+  id            String   @id @default(uuid())
+  poNumber      String   @unique
+  supplierName  String
+  status        String   // PENDING, RECEIVED, CANCELLED
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  items         PurchaseOrderItem[]
+}
+
+model PurchaseOrderItem {
+  id              String   @id @default(uuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id])
+  quantity        Int
+  unitCost        Float
+}
+
+model Invoice {
+  id            String   @id @default(uuid())
+  invoiceNumber String   @unique
+  customerId    String
+  customer      Customer @relation(fields: [customerId], references: [id])
+  challanId     String?  @unique
+  challan       Challan? @relation(fields: [challanId], references: [id])
+  totalAmount   Float
+  status        String   // UNPAID, PAID, CANCELLED
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
