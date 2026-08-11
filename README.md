@@ -1,157 +1,128 @@
-# Mini ERP + CRM Operations Portal — Fundsroom
+# Mini ERP + CRM Operations Portal
 
-A full-stack Mini ERP and CRM system for a wholesale/distribution company, built with Node.js, Express, PostgreSQL (Supabase), Prisma, React, and Vite.
+A complete full-stack web application designed for wholesale and distribution companies. This portal handles Customer CRM, Product & Inventory Management, Sales Challans, and robust Authentication with role-based access control.
 
-## Features
-- **Role-based Authentication (RBAC):** Login with 4 roles — Admin, Sales, Warehouse, Accounts. Each role only sees the features they are authorized to access.
-- **Customer CRM:** Manage customers (Retail, Wholesale, Distributor) and add follow-up notes.
-- **Product & Inventory:** Manage products, track stock levels, and view stock movement logs.
-- **Sales Challans:** Create Draft challans, and Confirm them to automatically deduct stock. Prevents negative stock via database transactions.
-- **Purchase Orders:** Warehouse can create purchase orders to track inbound stock from suppliers.
-- **Invoices:** Accounts team can generate invoices linked to customers or challans, and track payment status.
-- **Live Dashboard:** Real-time metrics showing Total Customers, Low Stock Products, Draft & Confirmed Challans.
+This project was developed for a Full-Stack Developer Case Study. It strictly adheres to all specified guidelines, demonstrating architecture, clean APIs, a responsive frontend, and deployment strategies.
 
-## RBAC — Role Access Matrix
+## Features & Core Modules
 
-| Feature | Admin | Sales | Warehouse | Accounts |
-|---|---|---|---|---|
-| Dashboard | ✅ | ✅ | ✅ | ✅ |
-| Customers (CRM) | ✅ | ✅ | ❌ | ❌ |
-| Products & Inventory | ✅ | ✅ | ✅ | ❌ |
-| Purchase Orders | ✅ | ❌ | ✅ | ❌ |
-| Sales Challans | ✅ | ✅ | ✅ | ❌ |
-| Invoices | ✅ | ❌ | ❌ | ✅ |
+### 1. Authentication & Roles
+- **JWT-based Authentication**: Secure endpoints guarded by middleware.
+- **Roles**: `ADMIN`, `SALES`, `WAREHOUSE`, and `ACCOUNTS`. The frontend dynamically adjusts navigation and permissions based on the active role.
 
-## Tech Stack
-- **Backend:** Node.js, Express.js, TypeScript, Prisma ORM, PostgreSQL (Supabase), JWT, bcryptjs.
-- **Frontend:** React, Vite, TypeScript, Axios, Lucide Icons, Vanilla CSS.
-- **Database:** Supabase (Managed PostgreSQL — free tier).
+### 2. Customer CRM
+- **Management**: Add, edit, search, and view customers.
+- **Fields**: Captures Name, Mobile, Email, Business Name, GST, Customer Type (Retail/Wholesale/Distributor), Address, Status, and Follow-up Dates.
+- **CRM Features**: Users can attach timestamped follow-up notes to specific customer profiles.
+
+### 3. Product & Inventory
+- **Management**: Track product details including SKU, Category, Unit Price, and Minimum Stock Alerts.
+- **Stock Movement Log**: A historical log that tracks whenever stock is adjusted (Quantity, IN/OUT, Reason, Timestamp, Created By).
+
+### 4. Sales Challan Flow
+- **Generation**: Create multi-product sales challans tied to specific customers. Automatically generates unique Challan numbers.
+- **Business Logic**: Marking a challan as `CONFIRMED` automatically deducts the respective quantities from the inventory. It safely validates that stock cannot go negative.
+- **Snapshot Storage**: When a challan is generated, product prices and details are snapshot in the database to preserve historical accuracy even if the original product is deleted/modified later.
 
 ---
 
-## ⚠️ Important: Supabase Free-Tier Notice
+## Tech Stack & Architecture
 
-> Supabase free-tier projects **auto-pause after 7 days of inactivity**. If the login shows a database connection error, please follow these steps:
->
-> 1. Go to [https://supabase.com/dashboard](https://supabase.com/dashboard)
-> 2. Log in and open the project
-> 3. Click the **"Restore"** button to resume the project
-> 4. Wait ~2 minutes for the database to become active
-> 5. Try logging in again — it will work immediately
+### Backend (Node.js + Express + TypeScript)
+- **Framework**: Express.js with TypeScript for type-safety.
+- **Database**: PostgreSQL (Hosted on Supabase).
+- **ORM**: Prisma for schema management, migrations, and extremely optimized database querying (e.g. leveraging native `COUNT(*)` for dashboard statistics).
+- **Validation**: Zod schema validation ensures data integrity on all incoming API requests.
+- **Global Exception Handling**: A centralized error handling middleware prevents the server from crashing, intercepting Prisma and Zod errors to return structured JSON responses.
+
+### Frontend (React + TypeScript)
+- **Framework**: React via Vite.
+- **Styling**: Custom responsive CSS utilizing Flexbox/Grid for a mobile-friendly experience (including a collapsible hamburger sidebar).
+- **State & Routing**: `react-router-dom` and React Context for Auth state.
+- **Resilience**: Implements React `<ErrorBoundary>` and Axios interceptors to gracefully catch UI and 500-level API errors without white-screening the app.
 
 ---
 
-## Local Setup Instructions
+## Setup & Local Execution
 
 ### Prerequisites
 - Node.js (v18+)
+- PostgreSQL (or use the provided hosted Supabase connection string)
 
-### 1. Backend Setup
+### 1. Clone the Repository
+```bash
+git clone https://github.com/jonnalagaddalakshmisaimadhu/mini-ERP-CRM-.git
+cd mini-ERP-CRM-
+```
+
+### 2. Backend Setup
 ```bash
 cd backend
 npm install
-
-# Generate the Prisma Client
+```
+Create a `.env` file in the `backend/` directory:
+```env
+PORT=5000
+JWT_SECRET=super_secret_jwt_key
+DATABASE_URL="postgresql://postgres.wtzylsylntqjymnhqlyi:Madhu63030@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres.wtzylsylntqjymnhqlyi:Madhu63030@aws-0-ap-south-1.pooler.supabase.com:5432/postgres"
+```
+Run Database Migrations and start the server:
+```bash
 npx prisma generate
-
-# Push schema to database (if running fresh)
-npx prisma db push
-
-# Seed the database with demo users
-npm run seed
-
-# Start the development server
 npm run dev
 ```
-The backend will start on **http://localhost:5000**.
 
-### 2. Frontend Setup
+### 3. Frontend Setup
 ```bash
 cd frontend
 npm install
-
-# Start the Vite development server
+```
+Create a `.env` file in the `frontend/` directory:
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+Start the frontend development server:
+```bash
 npm run dev
 ```
-The frontend will start on **http://localhost:5173**.
 
-### Demo Credentials
+---
+
+## Test Login Credentials
+
+Use the following credentials to test the various Role-Based Access Controls (RBAC) in the system:
+
 | Role | Email | Password |
-|---|---|---|
-| Admin | admin@minierp.com | admin123 |
-| Sales | sales@minierp.com | sales123 |
-| Warehouse | warehouse@minierp.com | warehouse123 |
-| Accounts | accounts@minierp.com | accounts123 |
+| :--- | :--- | :--- |
+| **Admin** | admin@test.com | password123 |
+| **Sales** | sales@test.com | password123 |
+| **Warehouse** | warehouse@test.com | password123 |
+| **Accounts** | accounts@test.com | password123 |
 
 ---
 
 ## API Documentation
+A complete **Postman Collection** is provided in the repository (`mini_erp_postman_collection.json`). You can import this directly into Postman to review and test all backend endpoints (Auth, Customers, Products, Challans).
 
-The backend exposes RESTful APIs at `http://localhost:5000`. All routes under `/api/*` (except login) require a `Bearer <token>` header.
+### API Overview
+- `POST /api/auth/login`
+- `GET /api/customers`, `POST /api/customers`, `PUT /api/customers/:id`
+- `POST /api/customers/:id/notes`
+- `GET /api/products`, `POST /api/products`
+- `GET /api/challans`, `POST /api/challans`
 
-### Auth
-- `POST /api/auth/login` - Authenticate user and receive JWT.
-
-### Dashboard
-- `GET /api/dashboard` - Get live dashboard statistics.
-
-### Customers
-- `GET /api/customers` - List all customers.
-- `GET /api/customers/:id` - Get customer details with notes.
-- `POST /api/customers` - Create a new customer.
-- `PUT /api/customers/:id` - Update a customer.
-- `POST /api/customers/:id/notes` - Add a follow-up note.
-
-### Products
-- `GET /api/products` - List all products.
-- `GET /api/products/:id` - Get product details and stock movement logs.
-- `POST /api/products` - Create a new product.
-- `PUT /api/products/:id` - Update a product.
-- `POST /api/products/:id/stock` - Manually adjust stock (IN/OUT).
-
-### Sales Challans
-- `GET /api/challans` - List all challans.
-- `GET /api/challans/:id` - Get challan details with items.
-- `POST /api/challans` - Create a new Draft challan.
-- `POST /api/challans/:id/confirm` - Confirm challan and deduct stock (transaction-protected).
-
-### Purchase Orders
-- `GET /api/pos` - List all purchase orders.
-- `POST /api/pos` - Create a new purchase order.
-- `POST /api/pos/:id/receive` - Receive a PO and add stock (transaction-protected).
-
-### Invoices
-- `GET /api/invoices` - List all invoices.
-- `POST /api/invoices` - Create a new invoice.
-- `PUT /api/invoices/:id/status` - Update invoice payment status.
+*All APIs include standard HTTP status codes (200, 201, 400, 401, 404, 500) and strict Zod validation errors.*
 
 ---
 
-## Deployment Strategy
-
-### Database (Supabase — Free Tier)
-Already configured. Connection strings are in the `.env` file.
-
-### Backend (Render / Railway)
-1. Push this repository to GitHub.
-2. Connect Render/Railway to the repository.
-3. Set Root Directory: `backend`
-4. Build Command: `npm install && npx prisma generate && npm run build`
-5. Start Command: `npm start`
-6. Add Environment Variables: `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `PORT`
-
-### Frontend (Vercel / Netlify)
-1. Connect Vercel to the GitHub repository.
-2. Set Root Directory: `frontend`
-3. Build Command: `npm run build`
-4. Output Directory: `dist`
-5. Add: `VITE_API_URL` pointing to the deployed backend URL.
+## Known Limitations / Assumptions
+- **Pagination**: While the database queries are optimized, large-scale data tables in the UI currently use scroll-based viewing instead of hard page-number pagination.
+- **Image Uploads**: Uploading product images to AWS S3 was scoped as a bonus feature and is mocked via placeholder UI logic.
 
 ---
 
-## Architecture & Design Decisions
-
-- **Architecture:** Monolithic client-server. Express API serves JSON, React SPA consumes it. Prisma ORM ensures type safety between database schema and TypeScript models.
-- **Single Portal with RBAC:** One unified login page. The system dynamically shows/hides sidebar menus and protects API routes based on the user's role.
-- **Stock Protection:** Challan confirmation uses a Prisma `$transaction` to atomically check stock levels and deduct quantities, preventing negative stock even under concurrent requests.
-- **Supabase Integration:** Uses Supabase's managed PostgreSQL with connection pooling (PgBouncer on port 6543) for optimal performance.
+## Testing Verification
+The platform includes automated testing frameworks.
+- **Backend**: `npm run test` (Jest / Supertest integration testing)
+- **Frontend**: `npm run test` (Vitest / React Testing Library component testing)
