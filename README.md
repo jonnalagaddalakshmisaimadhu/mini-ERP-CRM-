@@ -55,7 +55,11 @@ This project was developed for a Full-Stack Developer Case Study. It strictly ad
 
 ### Prerequisites
 - Node.js (v18+)
-- PostgreSQL (or use the provided hosted Supabase connection string)
+- PostgreSQL (Either installed locally, hosted on Supabase, or run via Docker)
+- Docker & Docker Compose (Optional: For local isolated database)
+
+### Environment Variables
+This project strictly utilizes environment variables to ensure secrets (like database credentials and JWT keys) are never hardcoded. Both the `backend` and `frontend` directories require their own `.env` files to function.
 
 ### 1. Clone the Repository
 ```bash
@@ -63,7 +67,14 @@ git clone https://github.com/jonnalagaddalakshmisaimadhu/mini-ERP-CRM-.git
 cd mini-ERP-CRM-
 ```
 
-### 2. Backend Setup
+### 2. (Optional) Run Database via Docker
+If you do not want to use the live Supabase cloud database, you can spin up a local PostgreSQL instance instantly using the provided `docker-compose.yml` file:
+```bash
+docker-compose up -d
+```
+*This will start a Postgres DB on port 5432 with the credentials defined in the compose file.*
+
+### 3. Backend Setup
 ```bash
 cd backend
 npm install
@@ -72,16 +83,18 @@ Create a `.env` file in the `backend/` directory:
 ```env
 PORT=5000
 JWT_SECRET=super_secret_jwt_key
+# Use Supabase URL or the Local Docker URL: postgresql://erp_user:erp_password@localhost:5432/erp_db
 DATABASE_URL="postgresql://postgres.wtzylsylntqjymnhqlyi:Madhu63030@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
 DIRECT_URL="postgresql://postgres.wtzylsylntqjymnhqlyi:Madhu63030@aws-0-ap-south-1.pooler.supabase.com:5432/postgres"
 ```
 Run Database Migrations and start the server:
 ```bash
 npx prisma generate
+npx prisma db push
 npm run dev
 ```
 
-### 3. Frontend Setup
+### 4. Frontend Setup
 ```bash
 cd frontend
 npm install
