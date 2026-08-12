@@ -1,49 +1,76 @@
 # Mini ERP + CRM Operations Portal
 
-A complete full-stack web application designed for wholesale and distribution companies. This portal handles Customer CRM, Product & Inventory Management, Sales Challans, and robust Authentication with role-based access control.
+![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen.svg) ![Vercel](https://img.shields.io/badge/Deployed-Vercel-black.svg)
+
+A complete full-stack web application designed for wholesale and distribution companies. This portal handles Customer CRM, Product & Inventory Management, Sales Challans, Invoices, Purchase Orders, and robust Authentication with role-based access control.
 
 This project was developed for a Full-Stack Developer Case Study. It strictly adheres to all specified guidelines, demonstrating architecture, clean APIs, a responsive frontend, and deployment strategies.
 
-## Features & Core Modules
+## 🚀 Live Links
+- **Frontend (Live App):** [https://mini-erp-crm-orpin.vercel.app](https://mini-erp-crm-orpin.vercel.app)
+- **Backend API Base URL:** [https://mini-erp-crm-ftfk.vercel.app](https://mini-erp-crm-ftfk.vercel.app)
 
-### 1. Authentication & Roles
-- **JWT-based Authentication**: Secure endpoints guarded by middleware.
-- **Roles**: `ADMIN`, `SALES`, `WAREHOUSE`, and `ACCOUNTS`. The frontend dynamically adjusts navigation and permissions based on the active role.
+---
+
+## 🏗️ Project Architecture
+
+The application is built using a modern **Monorepo** structure, splitting the Frontend and Backend into separate concerns while keeping them in the same repository for easy version control.
+
+### High-Level Architecture
+1. **Client Tier (Frontend):** React (Vite) application hosted on Vercel. Communicates with the backend via RESTful APIs using Axios.
+2. **Server Tier (Backend):** Node.js / Express.js server hosted on Vercel (Serverless Functions). Handles business logic, role validation, and routing.
+3. **Database Tier:** PostgreSQL database hosted on Supabase. Accessed by the backend using Prisma ORM.
+
+---
+
+## 📂 Project Structure & Files
+
+### Backend (`/backend`)
+Handles the REST API, database connections, and business logic.
+- **`src/server.ts` / `src/app.ts`**: The main entry points. `app.ts` configures Express middlewares and routes, while `server.ts` starts the listener.
+- **`src/db.ts`**: Initializes the Prisma Client for database communication.
+- **`src/controllers/`**: Contains the core business logic for each feature (e.g., `authController.ts`, `customerController.ts`, `challanController.ts`).
+- **`src/routes/`**: Maps API endpoints to their respective controllers (e.g., `authRoutes.ts`, `customerRoutes.ts`).
+- **`src/middleware/`**: Custom middleware functions. `auth.ts` verifies JWT tokens and checks RBAC roles, `errorHandler.ts` handles global API errors securely.
+- **`prisma/schema.prisma`**: The database schema defining all tables (User, Customer, Product, Challan, Invoice, etc.) and their relationships.
+- **`vercel.json`**: Serverless configuration to deploy the Node.js backend seamlessly on Vercel.
+
+### Frontend (`/frontend`)
+The React user interface.
+- **`src/main.tsx`**: React entry point and root rendering.
+- **`src/App.tsx`**: Defines the `react-router-dom` routes and wraps the application in the AuthProvider.
+- **`src/context/AuthContext.tsx`**: Global state management for user authentication and role validation.
+- **`src/components/`**: Reusable UI components.
+  - **`Layout.tsx`**: The main dashboard shell (Sidebar + Header + Content Area).
+  - **`Sidebar.tsx`**: Dynamic navigation menu based on user roles.
+  - **`ProtectedRoute.tsx`**: Route guard that blocks unauthorized access.
+- **`src/pages/`**: The main view for each route (e.g., `Dashboard.tsx`, `Customers.tsx`, `Products.tsx`, `Challans.tsx`).
+- **`src/services/api.ts`**: Axios instance configured with Interceptors to automatically attach JWT tokens to every outgoing request.
+
+---
+
+## 🔄 Workflow Design
+
+### 1. Authentication & Role-Based Access Control (RBAC)
+- **Workflow:** User logs in -> Backend verifies password & signs JWT -> Frontend saves JWT in `localStorage` -> Frontend Context updates and unlocks routes based on role (`ADMIN`, `SALES`, `WAREHOUSE`, `ACCOUNTS`).
 
 ### 2. Customer CRM
-- **Management**: Add, edit, search, and view customers.
-- **Fields**: Captures Name, Mobile, Email, Business Name, GST, Customer Type (Retail/Wholesale/Distributor), Address, Status, and Follow-up Dates.
-- **CRM Features**: Users can attach timestamped follow-up notes to specific customer profiles.
+- **Workflow:** Users can create customer profiles (Retail/Wholesale). Anyone can append timestamped follow-up notes to a customer.
 
-### 3. Product & Inventory
-- **Management**: Track product details including SKU, Category, Unit Price, and Minimum Stock Alerts.
-- **Stock Movement Log**: A historical log that tracks whenever stock is adjusted (Quantity, IN/OUT, Reason, Timestamp, Created By).
+### 3. Sales Challan Flow (Core Business Logic)
+- **Workflow:** 
+  1. A user creates a Challan, selecting a Customer and multiple Products.
+  2. The system snapshots the prices and details. 
+  3. Status starts as `DRAFT`.
+  4. When status is updated to `CONFIRMED` or `DISPATCHED`, the backend triggers an inventory transaction, automatically deducting stock.
+  5. The system prevents stock from going negative using transaction validation.
 
-### 4. Sales Challan Flow
-- **Generation**: Create multi-product sales challans tied to specific customers. Automatically generates unique Challan numbers.
-- **Business Logic**: Marking a challan as `CONFIRMED` automatically deducts the respective quantities from the inventory. It safely validates that stock cannot go negative.
-- **Snapshot Storage**: When a challan is generated, product prices and details are snapshot in the database to preserve historical accuracy even if the original product is deleted/modified later.
-
----
-
-## Tech Stack & Architecture
-
-### Backend (Node.js + Express + TypeScript)
-- **Framework**: Express.js with TypeScript for type-safety.
-- **Database**: PostgreSQL (Hosted on Supabase).
-- **ORM**: Prisma for schema management, migrations, and extremely optimized database querying (e.g. leveraging native `COUNT(*)` for dashboard statistics).
-- **Validation**: Zod schema validation ensures data integrity on all incoming API requests.
-- **Global Exception Handling**: A centralized error handling middleware prevents the server from crashing, intercepting Prisma and Zod errors to return structured JSON responses.
-
-### Frontend (React + TypeScript)
-- **Framework**: React via Vite.
-- **Styling**: Custom responsive CSS utilizing Flexbox/Grid for a mobile-friendly experience (including a collapsible hamburger sidebar).
-- **State & Routing**: `react-router-dom` and React Context for Auth state.
-- **Resilience**: Implements React `<ErrorBoundary>` and Axios interceptors to gracefully catch UI and 500-level API errors without white-screening the app.
+### 4. Inventory Management
+- **Workflow:** Whenever stock is added or removed (manually or via a Challan), a `StockMovement` log is created to provide a full audit trail of inventory changes.
 
 ---
 
-## Setup & Local Execution
+## 💻 Setup & Local Execution
 
 ### Prerequisites
 - Node.js (v18+)
@@ -89,7 +116,7 @@ npm run dev
 
 ---
 
-## Test Login Credentials
+## 🔑 Test Login Credentials
 
 Use the following credentials to test the various Role-Based Access Controls (RBAC) in the system:
 
@@ -102,27 +129,5 @@ Use the following credentials to test the various Role-Based Access Controls (RB
 
 ---
 
-## API Documentation
-A complete **Postman Collection** is provided in the repository (`mini_erp_postman_collection.json`). You can import this directly into Postman to review and test all backend endpoints (Auth, Customers, Products, Challans).
-
-### API Overview
-- `POST /api/auth/login`
-- `GET /api/customers`, `POST /api/customers`, `PUT /api/customers/:id`
-- `POST /api/customers/:id/notes`
-- `GET /api/products`, `POST /api/products`
-- `GET /api/challans`, `POST /api/challans`
-
-*All APIs include standard HTTP status codes (200, 201, 400, 401, 404, 500) and strict Zod validation errors.*
-
----
-
-## Known Limitations / Assumptions
-- **Pagination**: While the database queries are optimized, large-scale data tables in the UI currently use scroll-based viewing instead of hard page-number pagination.
-- **Image Uploads**: Uploading product images to AWS S3 was scoped as a bonus feature and is mocked via placeholder UI logic.
-
----
-
-## Testing Verification
-The platform includes automated testing frameworks.
-- **Backend**: `npm run test` (Jest / Supertest integration testing)
-- **Frontend**: `npm run test` (Vitest / React Testing Library component testing)
+## 📡 API Documentation
+A complete **Postman Collection** is provided in the repository (`mini_erp_postman_collection.json`). You can import this directly into Postman to review and test all backend endpoints (Auth, Customers, Products, Challans, Invoices, Purchase Orders).
